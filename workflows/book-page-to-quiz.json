@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "id": "page",
+      "type": "core/load-image",
+      "position": { "x": 40, "y": 80 },
+      "params": {}
+    },
+    {
+      "id": "facts",
+      "type": "quiz/facts-extractor",
+      "position": { "x": 360, "y": 80 },
+      "params": {
+        "model": "anthropic:claude-sonnet-5-5",
+        "language": ""
+      }
+    },
+    {
+      "id": "quiz",
+      "type": "quiz/from-facts",
+      "position": { "x": 700, "y": 40 },
+      "params": {
+        "model": "anthropic:claude-sonnet-5-5",
+        "questionCount": 6,
+        "language": "",
+        "difficulty": "medium",
+        "questionTypes": "both"
+      }
+    },
+    {
+      "id": "save",
+      "type": "core/save-json",
+      "position": { "x": 1040, "y": 80 },
+      "params": { "filename": "quiz.json", "pretty": true }
+    }
+  ],
+  "edges": [
+    { "from": { "node": "page", "port": "image" }, "to": { "node": "facts", "port": "image" } },
+    { "from": { "node": "facts", "port": "facts" }, "to": { "node": "quiz", "port": "facts" } },
+    { "from": { "node": "quiz", "port": "quiz" }, "to": { "node": "save", "port": "json" } }
+  ]
+}

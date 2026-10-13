@@ -1,0 +1,28 @@
+{
+  "name": "@anygen/app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@anygen/core": "workspace:*",
+    "@anygen/nodes": "workspace:*",
+    "@baklavajs/core": "2.8.1",
+    "@baklavajs/interface-types": "2.8.1",
+    "@baklavajs/renderer-vue": "2.8.1",
+    "@baklavajs/themes": "2.8.1",
+    "@pinia/nuxt": "^0.11.0",
+    "nuxt": "^4.6.1",
+    "pinia": "^3.0.0",
+    "vue": "^3.5.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "vue-tsc": "^3.3.13"
+  }
+}
