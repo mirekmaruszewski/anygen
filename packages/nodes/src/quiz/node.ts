@@ -1,6 +1,6 @@
 import { defineNode } from '@anygen/core'
 import { runStructured } from '../ai/text'
-import { modelParam } from '../llm/chat'
+import { modelInput } from '../llm/chat'
 import {
   buildQuiz,
   checkQuiz,
@@ -16,10 +16,9 @@ export const quizFromFactsNode = defineNode({
   category: 'Quiz',
   description:
     'Turns a text of facts into open, single (one correct option) and multiselect questions with answers. The result is checked (correct options exist, both types present) and retried once if not.',
-  inputs: [{ name: 'facts', type: 'text' }],
+  inputs: [modelInput(), { name: 'facts', type: 'text' }],
   outputs: [{ name: 'quiz', type: 'json' }],
   params: [
-    modelParam('anthropic:claude-sonnet-5-5'),
     {
       name: 'questionCount',
       type: 'number',
@@ -61,7 +60,7 @@ export const quizFromFactsNode = defineNode({
 
     const model = await runStructured<ModelQuiz>({
       ctx,
-      model: String(params.model),
+      model: String(inputs.model),
       temperature: 0.4,
       schema: modelQuizSchema,
       validate: (out) => checkQuiz(out as ModelQuiz, { types, count }),

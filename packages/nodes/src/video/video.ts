@@ -1,7 +1,7 @@
 import { experimental_generateVideo as generateVideo } from 'ai'
 import { defineNode } from '@anygen/core'
 import { getModels } from '../ai/models'
-import { modelParam } from '../llm/chat'
+import { modelInput } from '../llm/chat'
 import { extForMime, readAsset, saveAsset } from '../util/assets'
 
 /**
@@ -16,13 +16,13 @@ export const videoGenerateNode = defineNode({
   description:
     'Generates a video from a prompt, optionally animating an input image. Runs as an async job and can take minutes.',
   inputs: [
+    modelInput('video_model'),
     { name: 'prompt', type: 'text' },
     { name: 'image', type: 'image', required: false },
     { name: 'seed', type: 'number', required: false },
   ],
   outputs: [{ name: 'video', type: 'video' }],
   params: [
-    modelParam('fal:luma-ray-2-flash', 'e.g. fal:luma-ray-2-flash or replicate:minimax/video-01'),
     {
       name: 'aspectRatio',
       type: 'select',
@@ -51,7 +51,7 @@ export const videoGenerateNode = defineNode({
     ctx.progress({ message: 'Waiting for the video job (this can take minutes)…' })
 
     const { video } = await generateVideo({
-      model: getModels(ctx).video(String(params.model)),
+      model: getModels(ctx).video(String(inputs.model)),
       prompt: image ? { image, text } : text,
       aspectRatio: (String(params.aspectRatio ?? '') || undefined) as
         `${number}:${number}` | undefined,

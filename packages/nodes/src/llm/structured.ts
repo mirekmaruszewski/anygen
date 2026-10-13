@@ -1,7 +1,7 @@
 import { defineNode, type ParamDef } from '@anygen/core'
 import { runStructured } from '../ai/text'
 import { imagePart, readAsset } from '../util/assets'
-import { modelParam } from './chat'
+import { modelInput } from './chat'
 
 const DEFAULT_SCHEMA = {
   type: 'object',
@@ -45,13 +45,13 @@ export const structuredOutputNode = defineNode({
   title: 'Structured Output',
   category: 'LLM',
   description: 'Generates JSON that is validated against a JSON Schema (one retry on mismatch).',
-  inputs: [{ name: 'prompt', type: 'text' }],
+  inputs: [modelInput(), { name: 'prompt', type: 'text' }],
   outputs: [{ name: 'json', type: 'json' }],
-  params: [modelParam('anthropic:claude-sonnet-5-5'), schemaParam, systemParam],
+  params: [schemaParam, systemParam],
   execute: async (ctx, inputs, params) => ({
     json: await runStructured({
       ctx,
-      model: String(params.model),
+      model: String(inputs.model),
       system: String(params.system ?? ''),
       messages: [{ role: 'user', content: String(inputs.prompt) }],
       schema: parseSchemaParam(params.schema),
@@ -66,6 +66,7 @@ export const visionStructuredNode = defineNode({
   description:
     'Reads an image with a vision model and returns JSON validated against a JSON Schema (one retry on mismatch).',
   inputs: [
+    modelInput(),
     { name: 'image', type: 'image' },
     {
       name: 'prompt',
@@ -75,13 +76,13 @@ export const visionStructuredNode = defineNode({
     },
   ],
   outputs: [{ name: 'json', type: 'json' }],
-  params: [modelParam('anthropic:claude-sonnet-5-5'), schemaParam, systemParam],
+  params: [schemaParam, systemParam],
   execute: async (ctx, inputs, params) => {
     const { ref, data } = await readAsset(ctx, inputs.image, 'image')
     return {
       json: await runStructured({
         ctx,
-        model: String(params.model),
+        model: String(inputs.model),
         system: String(params.system ?? ''),
         messages: [
           {

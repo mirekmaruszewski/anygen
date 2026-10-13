@@ -2,7 +2,7 @@ import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createModelResolver } from '../src/ai/models'
-import { claudeChatNode, visionNode } from '../src/llm/chat'
+import { chatNode, visionNode } from '../src/llm/chat'
 import { structuredOutputNode } from '../src/llm/structured'
 import { PNG, run, testContext } from './helpers'
 
@@ -62,7 +62,7 @@ describe('LM Studio provider', () => {
   }
 
   it('chats with a local model', async () => {
-    const out = await run(claudeChatNode, ctx(), { prompt: 'hi' }, { model: 'lmstudio:gemma-3-4b' })
+    const out = await run(chatNode, ctx(), { model: 'lmstudio:gemma-3-4b', prompt: 'hi' })
     expect(out.text).toBe('Hello from gemma')
     const req = seen.at(-1)!
     expect(req.url).toBe('/v1/chat/completions')
@@ -72,7 +72,7 @@ describe('LM Studio provider', () => {
   it('sends images as image_url parts', async () => {
     const t = ctx()
     const image = await t.assets.save(PNG, { name: 'p.png', mime: 'image/png' })
-    await run(visionNode, t, { image, prompt: 'what is this' }, { model: 'lmstudio:gemma-3-4b' })
+    await run(visionNode, t, { model: 'lmstudio:gemma-3-4b', image, prompt: 'what is this' })
     const content = (seen.at(-1)!.body.messages as { content: unknown }[]).at(-1)!.content as {
       type: string
       image_url?: { url: string }
@@ -92,8 +92,8 @@ describe('LM Studio provider', () => {
     const out = await run(
       structuredOutputNode,
       ctx(),
-      { prompt: 'p' },
-      { model: 'lmstudio:gemma-3-4b', schema },
+      { model: 'lmstudio:gemma-3-4b', prompt: 'p' },
+      { schema },
     )
     expect(out.json).toEqual({ n: 7 })
     expect(seen.at(-1)!.body.response_format).toMatchObject({ type: 'json_schema' })

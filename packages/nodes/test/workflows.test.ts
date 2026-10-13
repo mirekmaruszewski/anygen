@@ -2,12 +2,15 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { NodeRegistry, parseGraph, validateGraph } from '@anygen/core'
-import { builtinNodes } from '../src'
+import { builtinNodes, loadModelNodes } from '../src'
 
 const dir = join(__dirname, '..', '..', '..', 'workflows')
 
 describe('example workflows', () => {
-  const registry = new NodeRegistry().registerAll(builtinNodes)
+  const registry = new NodeRegistry().registerAll([
+    ...builtinNodes,
+    ...loadModelNodes(join(__dirname, '..', '..', '..', 'models.json')),
+  ])
   const files = readdirSync(dir).filter((f) => f.endsWith('.json'))
 
   it('exist', () => {

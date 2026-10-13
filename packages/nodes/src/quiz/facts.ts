@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { defineNode } from '@anygen/core'
 import { runStructured } from '../ai/text'
-import { modelParam } from '../llm/chat'
+import { modelInput } from '../llm/chat'
 import { imagePart, readAsset } from '../util/assets'
 
 const modelFactsSchema = z.object({
@@ -20,10 +20,9 @@ export const factsExtractorNode = defineNode({
   category: 'Quiz',
   description:
     'Reads an image (e.g. a book page) with a vision model and lists the facts it states, one per line. Feed the result into Quiz from Facts.',
-  inputs: [{ name: 'image', type: 'image' }],
+  inputs: [modelInput(), { name: 'image', type: 'image' }],
   outputs: [{ name: 'facts', type: 'text' }],
   params: [
-    modelParam('anthropic:claude-sonnet-5-5'),
     { name: 'language', type: 'text', label: 'Language', default: '' },
     { name: 'instructions', type: 'textarea', label: 'Extra instructions', default: '' },
   ],
@@ -34,7 +33,7 @@ export const factsExtractorNode = defineNode({
 
     const out = await runStructured<ModelFacts>({
       ctx,
-      model: String(params.model),
+      model: String(inputs.model),
       temperature: 0.2,
       schema: modelFactsSchema,
       validate: (o) => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { claudeChatNode, visionNode } from '../src/llm/chat'
+import { chatNode, visionNode } from '../src/llm/chat'
 import { structuredOutputNode, visionStructuredNode } from '../src/llm/structured'
 import { createModelResolver, lmstudioBaseUrl, ollamaBaseUrl } from '../src/ai/models'
 import { factsExtractorNode } from '../src/quiz/facts'
@@ -36,7 +36,7 @@ describe('chat and vision', () => {
   it('streams text and reports partial output', async () => {
     const { model } = mockLanguageModel(['Hello brave new world'])
     const t = testContext({ model })
-    const out = await run(claudeChatNode, t, { prompt: 'hi' })
+    const out = await run(chatNode, t, { model: 'anthropic:x', prompt: 'hi' })
     expect(out.text).toBe('Hello brave new world')
     expect(t.progress.at(-1)?.partial).toBe('Hello brave new world')
   })
@@ -45,7 +45,9 @@ describe('chat and vision', () => {
     const { model, prompts } = mockLanguageModel(['A cat.'])
     const t = testContext({ model })
     const image = await t.assets.save(PNG, { name: 'p.png', mime: 'image/png' })
-    expect((await run(visionNode, t, { image, prompt: 'What is this?' })).text).toBe('A cat.')
+    expect(
+      (await run(visionNode, t, { model: 'test:model', image, prompt: 'What is this?' })).text,
+    ).toBe('A cat.')
     const user = (
       prompts[0] as { role: string; content: { type: string; mediaType?: string }[] }[]
     ).find((m) => m.role === 'user')!
@@ -57,7 +59,9 @@ describe('chat and vision', () => {
     const { model, calls } = mockLanguageModel(['x'])
     const t = testContext({ model })
     const doc = await t.assets.save(new Uint8Array([1]), { name: 'd.pdf', mime: 'application/pdf' })
-    await expect(run(visionNode, t, { image: doc, prompt: 'p' })).rejects.toThrow(/expected image/)
+    await expect(
+      run(visionNode, t, { model: 'test:model', image: doc, prompt: 'p' }),
+    ).rejects.toThrow(/expected image/)
     expect(calls()).toBe(0)
   })
 })
@@ -72,13 +76,23 @@ describe('structured output', () => {
 
   it('returns schema-valid JSON', async () => {
     const { model } = mockLanguageModel(['{"n": 3}'])
-    const out = await run(structuredOutputNode, testContext({ model }), { prompt: 'p' }, { schema })
+    const out = await run(
+      structuredOutputNode,
+      testContext({ model }),
+      { model: 'test:model', prompt: 'p' },
+      { schema },
+    )
     expect(out.json).toEqual({ n: 3 })
   })
 
   it('retries once when the output does not match the schema', async () => {
     const { model, calls } = mockLanguageModel(['{"n": "three"}', '{"n": 3}'])
-    const out = await run(structuredOutputNode, testContext({ model }), { prompt: 'p' }, { schema })
+    const out = await run(
+      structuredOutputNode,
+      testContext({ model }),
+      { model: 'test:model', prompt: 'p' },
+      { schema },
+    )
     expect(out.json).toEqual({ n: 3 })
     expect(calls()).toBe(2)
   })
@@ -86,7 +100,12 @@ describe('structured output', () => {
   it('gives up after the retry', async () => {
     const { model, calls } = mockLanguageModel(['nope'])
     await expect(
-      run(structuredOutputNode, testContext({ model }), { prompt: 'p' }, { schema }),
+      run(
+        structuredOutputNode,
+        testContext({ model }),
+        { model: 'test:model', prompt: 'p' },
+        { schema },
+      ),
     ).rejects.toThrow()
     expect(calls()).toBe(2)
   })
@@ -94,7 +113,7 @@ describe('structured output', () => {
   it('reports an invalid schema param clearly', async () => {
     const t = testContext({ model: mockLanguageModel(['{}']).model })
     await expect(
-      run(structuredOutputNode, t, { prompt: 'p' }, { schema: '{oops' }),
+      run(structuredOutputNode, t, { model: 'test:model', prompt: 'p' }, { schema: '{oops' }),
     ).rejects.toThrow(/not valid JSON/)
   })
 
@@ -102,7 +121,12 @@ describe('structured output', () => {
     const { model } = mockLanguageModel(['{"n": 1}'])
     const t = testContext({ model })
     const image = await t.assets.save(PNG, { name: 'p.png', mime: 'image/png' })
-    const out = await run(visionStructuredNode, t, { image, prompt: 'count' }, { schema })
+    const out = await run(
+      visionStructuredNode,
+      t,
+      { model: 'test:model', image, prompt: 'count' },
+      { schema },
+    )
     expect(out.json).toEqual({ n: 1 })
   })
 })
@@ -168,7 +192,12 @@ describe('Quiz from Facts node', () => {
 
   it('turns facts into a quiz', async () => {
     const { t, prompts } = setup([JSON.stringify(goodQuiz())])
-    const out = await run(quizFromFactsNode, t, { facts }, { questionCount: 6, language: 'Polish' })
+    const out = await run(
+      quizFromFactsNode,
+      t,
+      { model: 'test:model', facts },
+      { questionCount: 6, language: 'Polish' },
+    )
     expect(out.quiz).toMatchObject({ title: 'Photosynthesis', source: { type: 'facts' } })
     const text = JSON.stringify(prompts[0])
     expect(text).toContain('Polish')
@@ -180,7 +209,7 @@ describe('Quiz from Facts node', () => {
     const bad = goodQuiz()
     bad.questions[1]!.correctOptions = [9]
     const { t, prompts, calls } = setup([JSON.stringify(bad), JSON.stringify(goodQuiz())])
-    const out = await run(quizFromFactsNode, t, { facts })
+    const out = await run(quizFromFactsNode, t, { model: 'test:model', facts })
     expect((out.quiz as { questions: unknown[] }).questions).toHaveLength(2)
     expect(calls()).toBe(2)
     expect(JSON.stringify(prompts[1])).toContain('outside options')
@@ -188,7 +217,9 @@ describe('Quiz from Facts node', () => {
 
   it('fails without calling the model when there are no facts', async () => {
     const { t, calls } = setup([JSON.stringify(goodQuiz())])
-    await expect(run(quizFromFactsNode, t, { facts: '  ' })).rejects.toThrow(/No facts/)
+    await expect(run(quizFromFactsNode, t, { model: 'test:model', facts: '  ' })).rejects.toThrow(
+      /No facts/,
+    )
     expect(calls()).toBe(0)
   })
 })
@@ -208,14 +239,19 @@ describe('Facts Extractor node', () => {
         facts: [' Plants absorb CO2. ', '', 'Oxygen is released.'],
       }),
     ])
-    const out = await run(factsExtractorNode, t, { image }, { language: 'Polish' })
+    const out = await run(
+      factsExtractorNode,
+      t,
+      { model: 'test:model', image },
+      { language: 'Polish' },
+    )
     expect(out.facts).toBe('- Plants absorb CO2.\n- Oxygen is released.')
     expect(JSON.stringify(prompts[0])).toContain('Polish')
   })
 
   it('fails with a helpful message for an unreadable page', async () => {
     const { t, image } = await setup([JSON.stringify({ readable: false, facts: [] })])
-    await expect(run(factsExtractorNode, t, { image })).rejects.toThrow(
+    await expect(run(factsExtractorNode, t, { model: 'test:model', image })).rejects.toThrow(
       /could not read "page-12.png"/,
     )
   })

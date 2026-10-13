@@ -2,7 +2,7 @@ import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { speechToTextNode, textToSpeechNode } from '../src/audio/audio'
-import { imageToImageNode, openaiImageNode } from '../src/image/image'
+import { imageGenerateNode, imageToImageNode } from '../src/image/image'
 import { createModelResolver } from '../src/ai/models'
 import { PNG, run, testContext } from './helpers'
 
@@ -63,7 +63,12 @@ describe('media nodes via the OpenAI provider', () => {
 
   it('generates an image and stores it', async () => {
     const t = withOpenAI()
-    const out = await run(openaiImageNode, t, { prompt: 'a red square' }, { size: '512x512' })
+    const out = await run(
+      imageGenerateNode,
+      t,
+      { model: 'openai:gpt-image-1', prompt: 'a red square' },
+      { size: '512x512' },
+    )
     expect(out.image).toMatchObject({ mime: 'image/png', name: 'image.png' })
     const req = seen.find((r) => r.url.endsWith('/images/generations'))!
     expect(JSON.parse(req.body)).toMatchObject({ prompt: 'a red square', size: '512x512', n: 1 })
@@ -71,14 +76,23 @@ describe('media nodes via the OpenAI provider', () => {
 
   it('rejects a malformed size before calling the API', async () => {
     await expect(
-      run(openaiImageNode, withOpenAI(), { prompt: 'x' }, { size: 'big' }),
+      run(
+        imageGenerateNode,
+        withOpenAI(),
+        { model: 'openai:gpt-image-1', prompt: 'x' },
+        { size: 'big' },
+      ),
     ).rejects.toThrow(/1024x1024/)
   })
 
   it('edits an input image', async () => {
     const t = withOpenAI()
     const image = await t.assets.save(PNG, { name: 'in.png', mime: 'image/png' })
-    const out = await run(imageToImageNode, t, { image, prompt: 'make it blue' })
+    const out = await run(imageToImageNode, t, {
+      model: 'openai:test',
+      image,
+      prompt: 'make it blue',
+    })
     expect(out.image).toMatchObject({ mime: 'image/png' })
     const req = seen.find((r) => r.url.endsWith('/images/edits'))!
     expect(req.type).toContain('multipart/form-data')
@@ -87,7 +101,12 @@ describe('media nodes via the OpenAI provider', () => {
 
   it('synthesizes speech', async () => {
     const t = withOpenAI()
-    const out = await run(textToSpeechNode, t, { text: 'Hi there' }, { voice: 'nova', speed: 1.25 })
+    const out = await run(
+      textToSpeechNode,
+      t,
+      { model: 'openai:test', text: 'Hi there' },
+      { voice: 'nova', speed: 1.25 },
+    )
     expect(out.audio).toMatchObject({ mime: 'audio/mpeg', name: 'speech.mp3', size: 4 })
     const req = seen.find((r) => r.url.endsWith('/audio/speech'))!
     expect(JSON.parse(req.body)).toMatchObject({ input: 'Hi there', voice: 'nova', speed: 1.25 })
@@ -99,7 +118,9 @@ describe('media nodes via the OpenAI provider', () => {
       name: 'a.mp3',
       mime: 'audio/mpeg',
     })
-    expect((await run(speechToTextNode, t, { audio })).text).toBe('hello transcript')
+    expect((await run(speechToTextNode, t, { model: 'openai:test', audio })).text).toBe(
+      'hello transcript',
+    )
     expect(seen.some((r) => r.url.endsWith('/audio/transcriptions'))).toBe(true)
   })
 })

@@ -8,6 +8,15 @@ export const BASE_PORT_TYPES = [
   'audio',
   'video',
   'json',
+  /**
+   * `provider:model-name` ids produced by the model nodes (from models.json). One type per kind of
+   * model, so an image model cannot be wired into a chat node.
+   */
+  'model',
+  'image_model',
+  'speech_model',
+  'transcription_model',
+  'video_model',
   'any',
 ] as const
 

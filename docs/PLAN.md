@@ -122,8 +122,8 @@ The first end-to-end flow the app must support (drives M1/M2 scope):
 All model nodes call the Vercel AI SDK (`generateText`/`streamText`, structured output, `generateImage`, `generateSpeech`, `transcribe`). Token deltas are forwarded to the executor's progress events; usage data from the SDK feeds the cost estimates. Video has no stable AI SDK API, so video nodes call the Replicate/fal clients directly behind the same node contract.
 
 - **Input/utility**: Text, Number, Seed, Load Image, Template/Prompt Builder (`{{vars}}`), Concat, Switch, Loop/Batch (list map), Preview, Save File.
-- **LLM**: Claude Chat, OpenAI Chat, Ollama Chat (system prompt, temperature, streaming), Structured Output (JSON schema), Vision (image + prompt).
-- **Image**: OpenAI Image, Replicate/fal Image (e.g., Flux), Image-to-Image, Upscale.
+- **LLM**: Model (provider:model picker) + Chat (system prompt, temperature, streaming), Structured Output (JSON schema), Vision (image + prompt).
+- **Image**: Generate Image (OpenAI, fal or Replicate model), Image-to-Image, Upscale.
 - **Audio**: Text-to-Speech, Speech-to-Text.
 - **Video**: Text/Image-to-Video via Replicate/fal (async job polling).
 - **Generic**: HTTP Request node, Custom Code node (sandboxed JS) as escape hatch for "anything".

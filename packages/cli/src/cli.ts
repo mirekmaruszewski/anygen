@@ -11,7 +11,7 @@ import {
   type NodeResult,
   type RunStatus,
 } from '@anygen/core'
-import { builtinNodes } from '@anygen/nodes'
+import { builtinNodes, loadModelNodes } from '@anygen/nodes'
 import { createAnyGen, type AnyGen } from '../../../app/server/lib/context'
 import { applyOverrides, coerceParam, parseOverride } from './overrides'
 
@@ -125,7 +125,12 @@ export async function runCli(argv: string[], options: CliOptions = {}): Promise<
 }
 
 const defaultCreate = (env: Record<string, string | undefined>) => (dataDir: string) =>
-  createAnyGen({ dataDir, nodes: builtinNodes, env })
+  createAnyGen({
+    dataDir,
+    nodes: builtinNodes,
+    extraNodes: loadModelNodes(env.ANYGEN_MODELS_FILE ?? resolve(process.cwd(), 'models.json')),
+    env,
+  })
 
 function list(anygen: AnyGen, io: Io): number {
   const workflows = anygen.workflows.list()

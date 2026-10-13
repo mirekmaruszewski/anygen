@@ -1,14 +1,9 @@
-import { defineNode, type ParamDef } from '@anygen/core'
+import { defineNode, type ParamDef, type PortType } from '@anygen/core'
 import { runText } from '../ai/text'
 import { imagePart, readAsset } from '../util/assets'
 
-export const modelParam = (def: string, description?: string): ParamDef => ({
-  name: 'model',
-  type: 'text',
-  label: 'Model',
-  default: def,
-  description: description ?? 'Format: provider:model-name',
-})
+/** The `model` input every model-using node has; the model comes from a model node. */
+export const modelInput = (type: PortType = 'model') => ({ name: 'model', type }) as const
 
 const temperatureParam: ParamDef = {
   name: 'temperature',
@@ -31,50 +26,29 @@ const maxTokensParam: ParamDef = {
 
 const positive = (v: unknown) => (typeof v === 'number' && v > 0 ? v : undefined)
 
-function chatNode(opts: { id: string; title: string; model: string; description: string }) {
-  return defineNode({
-    id: opts.id,
-    title: opts.title,
-    category: 'LLM',
-    description: opts.description,
-    inputs: [
-      { name: 'prompt', type: 'text' },
-      { name: 'system', type: 'text', label: 'System prompt', required: false },
-    ],
-    outputs: [{ name: 'text', type: 'text' }],
-    params: [modelParam(opts.model), temperatureParam, maxTokensParam],
-    execute: async (ctx, inputs, params) => ({
-      text: await runText({
-        ctx,
-        model: String(params.model),
-        system: inputs.system as string | undefined,
-        messages: [{ role: 'user', content: String(inputs.prompt) }],
-        temperature: Number(params.temperature ?? 0.7),
-        maxOutputTokens: positive(params.maxTokens),
-      }),
+export const chatNode = defineNode({
+  id: 'llm/chat',
+  title: 'Chat',
+  category: 'LLM',
+  description:
+    'Chat with the model connected to its model input. Output streams into the inspector as it is written.',
+  inputs: [
+    modelInput(),
+    { name: 'prompt', type: 'text' },
+    { name: 'system', type: 'text', label: 'System prompt', required: false },
+  ],
+  outputs: [{ name: 'text', type: 'text' }],
+  params: [temperatureParam, maxTokensParam],
+  execute: async (ctx, inputs, params) => ({
+    text: await runText({
+      ctx,
+      model: String(inputs.model),
+      system: inputs.system as string | undefined,
+      messages: [{ role: 'user', content: String(inputs.prompt) }],
+      temperature: Number(params.temperature ?? 0.7),
+      maxOutputTokens: positive(params.maxTokens),
     }),
-  })
-}
-
-export const claudeChatNode = chatNode({
-  id: 'anthropic/chat',
-  title: 'Claude Chat',
-  model: 'anthropic:claude-sonnet-5-5',
-  description: 'Chat with a Claude model. Output streams into the inspector as it is written.',
-})
-
-export const openaiChatNode = chatNode({
-  id: 'openai/chat',
-  title: 'OpenAI Chat',
-  model: 'openai:gpt-5',
-  description: 'Chat with an OpenAI model.',
-})
-
-export const ollamaChatNode = chatNode({
-  id: 'ollama/chat',
-  title: 'Ollama Chat',
-  model: 'ollama:llama3.2',
-  description: 'Chat with a local Ollama model. Set the server URL in Settings if it is not local.',
+  }),
 })
 
 export const visionNode = defineNode({
@@ -83,18 +57,19 @@ export const visionNode = defineNode({
   category: 'LLM',
   description: 'Asks a vision-capable model about an image.',
   inputs: [
+    modelInput(),
     { name: 'image', type: 'image' },
     { name: 'prompt', type: 'text' },
     { name: 'system', type: 'text', label: 'System prompt', required: false },
   ],
   outputs: [{ name: 'text', type: 'text' }],
-  params: [modelParam('anthropic:claude-sonnet-5-5'), temperatureParam, maxTokensParam],
+  params: [temperatureParam, maxTokensParam],
   execute: async (ctx, inputs, params) => {
     const { ref, data } = await readAsset(ctx, inputs.image, 'image')
     return {
       text: await runText({
         ctx,
-        model: String(params.model),
+        model: String(inputs.model),
         system: inputs.system as string | undefined,
         messages: [
           {

@@ -9,9 +9,9 @@ import { templateNode } from './core/template'
 import { concatNode, textNode } from './core/text'
 import { customCodeNode } from './generic/code'
 import { httpRequestNode } from './generic/http'
-import { flexImageNode, imageToImageNode, openaiImageNode } from './image/image'
+import { imageGenerateNode, imageToImageNode } from './image/image'
 import { resizeImageNode } from './image/resize'
-import { claudeChatNode, ollamaChatNode, openaiChatNode, visionNode } from './llm/chat'
+import { chatNode, visionNode } from './llm/chat'
 import { structuredOutputNode, visionStructuredNode } from './llm/structured'
 import { factsExtractorNode } from './quiz/facts'
 import { quizFromFactsNode } from './quiz/node'
@@ -19,6 +19,7 @@ import { videoGenerateNode } from './video/video'
 
 export { concatNode, textNode }
 export { createModelResolver, getModels, type ModelResolver } from './ai/models'
+export { loadModelNodes, modelNodes, DEFAULT_MODELS, type ModelEntry } from './llm/models-config'
 export { htmlToText } from './core/html-to-text'
 export { renderTemplate } from './core/template'
 export { runSandboxed } from './generic/code'
@@ -39,9 +40,7 @@ export const builtinNodes: NodeDefinition[] = [
   htmlToTextNode,
   switchNode,
   // LLM
-  claudeChatNode,
-  openaiChatNode,
-  ollamaChatNode,
+  chatNode,
   visionNode,
   structuredOutputNode,
   visionStructuredNode,
@@ -49,8 +48,7 @@ export const builtinNodes: NodeDefinition[] = [
   factsExtractorNode,
   quizFromFactsNode,
   // Image
-  openaiImageNode,
-  flexImageNode,
+  imageGenerateNode,
   imageToImageNode,
   resizeImageNode,
   // Audio

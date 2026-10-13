@@ -11,6 +11,10 @@ export interface AnyGenOptions {
   /** Directory for the SQLite file, assets and the secrets key file. */
   dataDir: string
   nodes: NodeDefinition[]
+  /** Extra node types, e.g. the model nodes read from models.json. */
+  extraNodes?: NodeDefinition[]
+  /** Extra node types, e.g. the model nodes read from models.json. */
+  extraNodes?: NodeDefinition[]
   env?: Record<string, string | undefined>
   /** Use `:memory:` for tests. */
   dbFile?: string
@@ -20,7 +24,7 @@ export interface AnyGenOptions {
 export function createAnyGen(options: AnyGenOptions) {
   const { dataDir } = options
   const db = openDb(options.dbFile ?? join(dataDir, 'anygen.sqlite'))
-  const registry = new NodeRegistry().registerAll(options.nodes)
+  const registry = new NodeRegistry().registerAll([...options.nodes, ...(options.extraNodes ?? [])])
   const assets = createAssetStore(db, join(dataDir, 'assets'))
   const secrets = createSecretStore(db, join(dataDir, 'secret.key'), options.env)
   const settings = createSettingsStore(db)

@@ -1,7 +1,7 @@
 import { experimental_generateSpeech as generateSpeech, transcribe } from 'ai'
 import { defineNode } from '@anygen/core'
 import { getModels } from '../ai/models'
-import { modelParam } from '../llm/chat'
+import { modelInput } from '../llm/chat'
 import { extForMime, readAsset, saveAsset } from '../util/assets'
 
 export const textToSpeechNode = defineNode({
@@ -9,10 +9,9 @@ export const textToSpeechNode = defineNode({
   title: 'Text to Speech',
   category: 'Audio',
   description: 'Reads the text aloud.',
-  inputs: [{ name: 'text', type: 'text' }],
+  inputs: [modelInput('speech_model'), { name: 'text', type: 'text' }],
   outputs: [{ name: 'audio', type: 'audio' }],
   params: [
-    modelParam('openai:gpt-4o-mini-tts'),
     {
       name: 'voice',
       type: 'text',
@@ -25,7 +24,7 @@ export const textToSpeechNode = defineNode({
   execute: async (ctx, inputs, params) => {
     ctx.progress({ message: 'Synthesizing speech…' })
     const { audio } = await generateSpeech({
-      model: getModels(ctx).speech(String(params.model)),
+      model: getModels(ctx).speech(String(inputs.model)),
       text: String(inputs.text),
       voice: String(params.voice || '') || undefined,
       speed: Number(params.speed ?? 1),
@@ -45,14 +44,13 @@ export const speechToTextNode = defineNode({
   title: 'Speech to Text',
   category: 'Audio',
   description: 'Transcribes an audio file.',
-  inputs: [{ name: 'audio', type: 'audio' }],
+  inputs: [modelInput('transcription_model'), { name: 'audio', type: 'audio' }],
   outputs: [{ name: 'text', type: 'text' }],
-  params: [modelParam('openai:gpt-4o-transcribe')],
-  execute: async (ctx, inputs, params) => {
+  execute: async (ctx, inputs) => {
     const { data } = await readAsset(ctx, inputs.audio, 'audio')
     ctx.progress({ message: 'Transcribing…' })
     const { text } = await transcribe({
-      model: getModels(ctx).transcription(String(params.model)),
+      model: getModels(ctx).transcription(String(inputs.model)),
       audio: data,
       abortSignal: ctx.signal,
     })

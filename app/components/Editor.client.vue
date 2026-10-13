@@ -2,6 +2,7 @@
 import {
   BaklavaEditor,
   CLEAR_HISTORY_COMMAND,
+  Components,
   REDO_COMMAND,
   UNDO_COMMAND,
   useBaklava,
@@ -158,6 +159,22 @@ function onImport(e: Event) {
 const { theme, init: initTheme, toggle: toggleTheme } = useTheme()
 onMounted(initTheme)
 
+const isModelNode = (node: { type: string }) => node.type.startsWith('model/')
+
+/**
+ * Model nodes have no title bar, so the circle starts the drag itself. Pointer-downs on the port
+ * are left alone: the editor uses them to start a connection.
+ */
+function onModelPointerDown(
+  e: PointerEvent,
+  slot: { selected: boolean; onSelect: () => void; onStartDrag: (ev: PointerEvent) => void },
+) {
+  if ((e.target as HTMLElement).closest('.__port')) return
+  e.stopPropagation()
+  if (!slot.selected) slot.onSelect()
+  slot.onStartDrag(e)
+}
+
 const exec = (command: string) => viewModel.commandHandler.executeCommand(command)
 </script>
 
@@ -223,7 +240,29 @@ const exec = (command: string) => viewModel.commandHandler.executeCommand(comman
 
     <div class="body">
       <div ref="canvasEl" class="canvas" @dragover.prevent @drop.prevent="onDrop">
-        <BaklavaEditor :view-model="viewModel" />
+        <BaklavaEditor :view-model="viewModel">
+          <template #node="slot">
+            <!-- Model nodes (from models.json) are drawn as a circle with a robot icon. -->
+            <Components.Node v-bind="slot">
+              <template v-if="isModelNode(slot.node)" #title><span /></template>
+              <template v-if="isModelNode(slot.node)" #content>
+                <div class="ag-model" @pointerdown="onModelPointerDown($event, slot)">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 8V4H8" />
+                    <rect width="16" height="12" x="4" y="8" rx="2" />
+                    <path d="M2 14h2M20 14h2M15 13v2M9 13v2" />
+                  </svg>
+                  <span class="ag-model-name">{{ slot.node.title }}</span>
+                  <Components.NodeInterface
+                    :node="slot.node"
+                    :intf="slot.node.outputs.model!"
+                    class="ag-model-port"
+                  />
+                </div>
+              </template>
+            </Components.Node>
+          </template>
+        </BaklavaEditor>
         <NodePalette :catalog="(catalog as NodeMeta[] | null) ?? []" @add="addNode($event)">
           <div class="history">
             <button :disabled="!ready" title="Undo (Ctrl+Z)" @click="exec(UNDO_COMMAND)">↶</button>
@@ -460,5 +499,65 @@ const exec = (command: string) => viewModel.commandHandler.executeCommand(comman
 }
 .baklava-node-interface[data-interface-type='json'] .__port {
   background: #e28b46;
+}
+.baklava-node-interface[data-interface-type$='model'] .__port {
+  background: #2fc4c4;
+}
+
+/* Model nodes: a circle with a robot icon, the name underneath, the output port on the right. */
+.baklava-node[data-node-type^='model/'] {
+  width: 84px !important;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--ag-accent-soft);
+}
+.baklava-node[data-node-type^='model/'] > .__content {
+  height: 100%;
+  padding: 0;
+}
+.baklava-node[data-node-type^='model/'] .ag-model {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 100%;
+  cursor: grab;
+  color: var(--ag-accent);
+}
+.baklava-node[data-node-type^='model/'] .ag-model svg {
+  width: 42px;
+  height: 42px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.baklava-node[data-node-type^='model/'] .ag-model-name {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  width: max-content;
+  max-width: 180px;
+  transform: translateX(-50%);
+  color: var(--ag-text);
+  font-size: 0.85em;
+  font-weight: 600;
+  text-align: center;
+}
+.baklava-node[data-node-type^='model/'] .ag-model-port {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  padding: 0;
+}
+.baklava-node[data-node-type^='model/'] .ag-model-port .align-middle {
+  display: none;
+}
+:root[data-theme] .baklava-node[data-node-type^='model/'] .ag-model-port .__port {
+  top: 0;
+  right: auto;
+  left: 0;
+  margin: 0;
+  transform: translate(-50%, -50%) rotate(45deg);
 }
 </style>
