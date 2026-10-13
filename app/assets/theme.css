@@ -1,0 +1,211 @@
+/* AnyGen theme: Miro-like light (default) and dark. Switched via <html data-theme="light|dark">.
+   Selectors are `:root[data-theme]` so they out-rank the Baklava theme's plain `:root` variables. */
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --ag-bg: #f4f4f6;
+  --ag-surface: #ffffff;
+  --ag-surface-2: #f1f2f5;
+  --ag-surface-hover: #e6e8ee;
+  --ag-border: #e0e2e8;
+  --ag-border-strong: #c7cad5;
+  --ag-text: #222428;
+  --ag-muted: #6b7080;
+  --ag-accent: #4262ff;
+  --ag-accent-hover: #3050f0;
+  --ag-accent-fg: #ffffff;
+  --ag-accent-soft: #e8ecff;
+  --ag-ok: #1f9d55;
+  --ag-error: #d6293e;
+  --ag-warn-bg: #fff6dd;
+  --ag-error-bg: #fde8eb;
+  --ag-dot: #c4c7d0;
+  --ag-node-shadow: 0 0 0 8px rgba(34, 36, 40, 0.04), 0 8px 28px rgba(34, 36, 40, 0.1);
+  --ag-node-shadow-drag: 0 8px 28px rgba(34, 36, 40, 0.2);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --ag-bg: #1b1d24;
+  --ag-surface: #262932;
+  --ag-surface-2: #2f333e;
+  --ag-surface-hover: #3a3f4d;
+  --ag-border: #343845;
+  --ag-border-strong: #4a5063;
+  --ag-text: #f2f3f7;
+  --ag-muted: #9aa0b2;
+  --ag-accent: #6c85ff;
+  --ag-accent-hover: #8397ff;
+  --ag-accent-fg: #101324;
+  --ag-accent-soft: #2b3358;
+  --ag-ok: #4cd08a;
+  --ag-error: #ff6b7d;
+  --ag-warn-bg: #3a3320;
+  --ag-error-bg: #4a2329;
+  --ag-dot: #3b3f4d;
+  --ag-node-shadow: 0 0 0 8px rgba(255, 255, 255, 0.04), 0 8px 28px rgba(0, 0, 0, 0.45);
+  --ag-node-shadow-drag: 0 8px 28px rgba(0, 0, 0, 0.6);
+}
+
+/* Map onto Baklava's variables. */
+:root[data-theme] {
+  --baklava-control-color-primary: var(--ag-accent);
+  --baklava-control-color-error: var(--ag-error);
+  --baklava-control-color-background: var(--ag-surface-2);
+  --baklava-control-color-foreground: var(--ag-text);
+  --baklava-control-color-hover: var(--ag-surface-hover);
+  --baklava-control-color-active: var(--ag-border-strong);
+  --baklava-control-color-disabled-foreground: var(--ag-muted);
+  --baklava-control-border-radius: 8px;
+  --baklava-sidebar-color-background: var(--ag-surface);
+  --baklava-sidebar-color-foreground: var(--ag-text);
+  --baklava-node-color-background: var(--ag-surface);
+  --baklava-node-color-foreground: var(--ag-text);
+  --baklava-node-color-hover: var(--ag-border-strong);
+  --baklava-node-color-selected: var(--ag-accent);
+  --baklava-node-color-resize-handle: var(--ag-border-strong);
+  --baklava-node-title-color-background: transparent;
+  --baklava-node-title-color-foreground: var(--ag-text);
+  --baklava-node-interface-port-color: var(--ag-border-strong);
+  --baklava-node-interface-port-tooltip-color-foreground: var(--ag-text);
+  --baklava-node-interface-port-tooltip-color-background: var(--ag-surface);
+  --baklava-node-border-radius: 16px;
+  --baklava-color-connection-default: var(--ag-accent);
+  --baklava-color-connection-allowed: var(--ag-ok);
+  --baklava-color-connection-forbidden: var(--ag-error);
+  --baklava-editor-background-pattern-default: var(--ag-bg);
+  --baklava-context-menu-background: var(--ag-surface);
+  --baklava-context-menu-shadow: var(--ag-node-shadow);
+  --baklava-toolbar-background: var(--ag-surface);
+  --baklava-toolbar-foreground: var(--ag-text);
+  --baklava-node-palette-background: var(--ag-surface);
+  --baklava-node-palette-foreground: var(--ag-text);
+  --baklava-selectionbox-color-border: var(--ag-accent);
+  --baklava-selectionbox-color-background: var(--ag-accent-soft);
+}
+
+:root {
+  --ag-font: 'Urbanist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+html,
+body {
+  font-family: var(--ag-font);
+  margin: 0;
+  background: var(--ag-bg);
+  color: var(--ag-text);
+}
+
+/* Dotted canvas. */
+:root[data-theme] .baklava-editor .background {
+  background-color: var(--ag-bg);
+  /* Baklava sizes four layers inline: 1-2 at the major grid (100px), 3-4 at the minor grid
+     (100px / 5 = 20px), and pans/zooms them together. Dots go only on layer 3 (minor). */
+  background-image: none, none, radial-gradient(circle, var(--ag-dot) 1px, transparent 1.4px), none;
+  background-repeat: repeat;
+}
+
+/* Miro-style cards: white, large radius, hairline border, wide soft shadow, ruled header. */
+:root[data-theme] .baklava-node {
+  border: 1px solid var(--ag-border);
+  box-shadow: var(--ag-node-shadow);
+  overflow: visible;
+}
+:root[data-theme] .baklava-node:hover {
+  border-color: var(--ag-border-strong);
+}
+:root[data-theme] .baklava-node.--selected {
+  border-color: var(--ag-accent);
+  box-shadow:
+    0 0 0 1px var(--ag-accent),
+    var(--ag-node-shadow);
+}
+:root[data-theme] .baklava-node.--dragging {
+  box-shadow: var(--ag-node-shadow-drag);
+}
+:root[data-theme] .baklava-node > .__title {
+  padding: 0.75em 1em;
+  font-weight: 600;
+  border-bottom: 1px solid var(--ag-border);
+}
+:root[data-theme] .baklava-node[data-node-type^='__baklava_'] > .__title {
+  background: var(--ag-accent-soft);
+  color: var(--ag-text);
+}
+:root[data-theme] .baklava-node > .__content {
+  padding: 0.5em 1em 0.9em;
+}
+:root[data-theme] .baklava-node-interface {
+  padding-top: 0.35em;
+  padding-bottom: 0.35em;
+  font-size: 0.9em;
+}
+/* Ports: diamonds sitting on the card edge, tinted by port type (see Editor.client.vue). */
+:root[data-theme] .baklava-node-interface .__port {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--ag-surface);
+  border-radius: 3px;
+  box-sizing: content-box;
+  transform: rotate(45deg);
+}
+:root[data-theme] .baklava-node-interface.--input .__port {
+  left: calc(-1.1em - 2px);
+}
+:root[data-theme] .baklava-node-interface.--output .__port {
+  right: calc(-1.1em - 2px);
+}
+
+/* Connections and inputs. */
+:root[data-theme] .baklava-connection {
+  stroke-width: 2px;
+}
+:root[data-theme] .baklava-input,
+:root[data-theme] .baklava-select,
+:root[data-theme] .baklava-slider {
+  border: 1px solid var(--ag-border);
+}
+:root[data-theme] .baklava-input:focus {
+  outline: 2px solid var(--ag-accent);
+}
+:root[data-theme] .baklava-toolbar {
+  /* Compact floating pill, bottom-centre, instead of a full-width bar. */
+  top: auto;
+  bottom: 16px;
+  left: 50%;
+  width: auto;
+  height: auto;
+  transform: translateX(-50%);
+  padding: 4px;
+  gap: 2px;
+  border: 1px solid var(--ag-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ag-surface) 65%, transparent);
+  box-shadow: var(--ag-node-shadow);
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+}
+:root[data-theme] .baklava-toolbar-entry {
+  margin: 0;
+}
+:root[data-theme] .baklava-toolbar-button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 10px;
+}
+:root[data-theme] .baklava-toolbar-button:hover:not([disabled]) {
+  background: var(--ag-surface-hover);
+  color: var(--ag-text);
+}
+
+/* Form controls and Baklava (which sets its own Lato stack) follow the app font. */
+button,
+input,
+select,
+textarea,
+.baklava-editor {
+  font-family: var(--ag-font);
+}

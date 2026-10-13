@@ -72,14 +72,14 @@ async function onPick(event: Event) {
   font-size: 0.85em;
 }
 .label {
-  color: #8893a5;
+  color: var(--ag-muted);
 }
 .thumb {
   max-width: 100%;
   max-height: 140px;
   object-fit: contain;
   border-radius: 3px;
-  background: #1b202c;
+  background: var(--ag-surface-2);
 }
 .file {
   overflow: hidden;
@@ -93,16 +93,16 @@ async function onPick(event: Event) {
 button {
   flex: 1;
   padding: 3px 6px;
-  color: #fff;
-  background: #2c3748;
-  border: 1px solid #3b4a61;
-  border-radius: 3px;
+  color: var(--ag-text);
+  background: var(--ag-surface-2);
+  border: 1px solid var(--ag-border);
+  border-radius: 6px;
   cursor: pointer;
 }
 button:hover:not(:disabled) {
-  background: #3b4a61;
+  background: var(--ag-surface-hover);
 }
 .error {
-  color: #ff6b6b;
+  color: var(--ag-error);
 }
 </style>

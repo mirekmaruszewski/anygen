@@ -96,9 +96,9 @@ const pretty = (v: unknown) => (typeof v === 'string' ? v : JSON.stringify(v, nu
 .inspector {
   padding: 12px;
   overflow-y: auto;
-  background: #1b202c;
-  color: #fff;
-  border-left: 1px solid #2c3748;
+  background: var(--ag-surface);
+  color: var(--ag-text);
+  border-left: 1px solid var(--ag-border);
 }
 h3,
 h4 {
@@ -107,10 +107,10 @@ h4 {
 h4 {
   margin-top: 12px;
   font-size: 0.85em;
-  color: #e28b46;
+  color: var(--ag-accent);
 }
 .desc {
-  color: #8893a5;
+  color: var(--ag-muted);
   font-size: 0.9em;
 }
 .status {
@@ -119,14 +119,14 @@ h4 {
 }
 .status[data-status='error'],
 .error {
-  color: #ff6b6b;
+  color: var(--ag-error);
 }
 .status[data-status='done'],
 .status[data-status='cached'] {
-  color: #5fd38d;
+  color: var(--ag-ok);
 }
 .status[data-status='running'] {
-  color: #e28b46;
+  color: var(--ag-accent);
 }
 pre {
   margin: 0;
@@ -135,14 +135,14 @@ pre {
   overflow: auto;
   white-space: pre-wrap;
   word-break: break-word;
-  background: #2c3748;
-  border-radius: 3px;
+  background: var(--ag-surface-2);
+  border-radius: 8px;
   font-size: 0.85em;
 }
 .download {
   display: inline-block;
   margin-top: 6px;
-  color: #e28b46;
+  color: var(--ag-accent);
   font-size: 0.85em;
 }
 img,

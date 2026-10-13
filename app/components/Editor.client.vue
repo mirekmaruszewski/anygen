@@ -155,6 +155,9 @@ function onImport(e: Event) {
   input.value = ''
 }
 
+const { theme, init: initTheme, toggle: toggleTheme } = useTheme()
+onMounted(initTheme)
+
 const exec = (command: string) => viewModel.commandHandler.executeCommand(command)
 </script>
 
@@ -166,13 +169,17 @@ const exec = (command: string) => viewModel.commandHandler.executeCommand(comman
       <span class="dirty" :title="doc.dirty.value ? 'Unsaved changes' : 'Saved'">
         {{ doc.saving.value ? 'saving…' : doc.dirty.value ? '●' : '' }}
       </span>
+      <span class="sep" />
       <button :disabled="!ready" @click="doc.newDoc()">New</button>
       <select :disabled="!ready" aria-label="Open workflow" @change="onOpen">
         <option value="">Open…</option>
         <option v-for="w in doc.list.value" :key="w.id" :value="w.id">{{ w.name }}</option>
       </select>
-      <button :disabled="!ready" @click="doc.save()">Save</button>
-      <button :disabled="!ready || !doc.id.value" @click="doc.remove()">Delete</button>
+      <button class="primary-soft" :disabled="!ready" @click="doc.save()">Save</button>
+      <button class="danger" :disabled="!ready || !doc.id.value" @click="doc.remove()">
+        Delete
+      </button>
+      <span class="sep" />
       <button :disabled="!ready" @click="doc.exportJson()">Export</button>
       <button :disabled="!ready" @click="importInput?.click()">Import</button>
       <input
@@ -183,13 +190,20 @@ const exec = (command: string) => viewModel.commandHandler.executeCommand(comman
         @change="onImport"
       />
       <span class="spacer" />
-      <button :disabled="!ready" title="Undo (Ctrl+Z)" @click="exec(UNDO_COMMAND)">↶</button>
-      <button :disabled="!ready" title="Redo (Ctrl+Y)" @click="exec(REDO_COMMAND)">↷</button>
+      <button
+        class="theme-toggle"
+        :title="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+        :aria-label="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+        @click="toggleTheme"
+      >
+        {{ theme === 'dark' ? '☀' : '☾' }}
+      </button>
+      <span class="sep" />
       <button class="run" :disabled="!ready || running || !nodeCount" @click="runAll">▶ Run</button>
       <button :disabled="!ready || running || !selected.length" @click="runSelected">
         Run selected
       </button>
-      <button :disabled="!running" @click="runStore.cancel()">Cancel</button>
+      <button class="danger" :disabled="!running" @click="runStore.cancel()">Cancel</button>
     </header>
 
     <div v-if="catalogError" class="banner error">
@@ -208,9 +222,14 @@ const exec = (command: string) => viewModel.commandHandler.executeCommand(comman
     </div>
 
     <div class="body">
-      <NodePalette :catalog="(catalog as NodeMeta[] | null) ?? []" @add="addNode($event)" />
       <div ref="canvasEl" class="canvas" @dragover.prevent @drop.prevent="onDrop">
         <BaklavaEditor :view-model="viewModel" />
+        <NodePalette :catalog="(catalog as NodeMeta[] | null) ?? []" @add="addNode($event)">
+          <div class="history">
+            <button :disabled="!ready" title="Undo (Ctrl+Z)" @click="exec(UNDO_COMMAND)">↶</button>
+            <button :disabled="!ready" title="Redo (Ctrl+Y)" @click="exec(REDO_COMMAND)">↷</button>
+          </div>
+        </NodePalette>
       </div>
       <Inspector
         :node-id="selectedNode?.id ?? null"
@@ -227,64 +246,126 @@ const exec = (command: string) => viewModel.commandHandler.executeCommand(comman
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #1b202c;
-  color: #fff;
-  font-family: system-ui, sans-serif;
+  background: var(--ag-bg);
+  color: var(--ag-text);
+  font-family: var(--ag-font);
 }
 .bar {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  background: #1b202c;
-  border-bottom: 1px solid #2c3748;
+  gap: 4px;
+  padding: 8px 12px;
+  background: var(--ag-surface);
+  border-bottom: 1px solid var(--ag-border);
 }
 .brand {
-  color: #e28b46;
-}
-.name {
-  width: 220px;
+  margin-right: 4px;
+  color: var(--ag-accent);
+  font-size: 1.15em;
+  letter-spacing: -0.01em;
 }
 .spacer {
   flex: 1;
 }
+.sep {
+  align-self: center;
+  width: 1px;
+  height: 20px;
+  margin: 0 6px;
+  background: var(--ag-border);
+}
 .dirty {
   min-width: 3.5em;
-  color: #e28b46;
+  color: var(--ag-accent);
   font-size: 0.85em;
 }
+
+/* Buttons: borderless ghost style, 36px high, rounded; hover tints the background. */
 .bar button,
 .bar select,
 .bar .name,
 .banner button {
-  padding: 5px 10px;
-  border: 1px solid #455670;
-  border-radius: 3px;
-  background: #2c3748;
-  color: inherit;
+  height: 36px;
+  box-sizing: border-box;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ag-text);
   font: inherit;
+  font-weight: 500;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    color 0.12s;
 }
-.bar button:hover:not(:disabled) {
-  background: #455670;
+.bar button:hover:not(:disabled),
+.bar select:hover:not(:disabled) {
+  background: var(--ag-surface-hover);
   cursor: pointer;
+}
+.bar button:focus-visible,
+.bar select:focus-visible,
+.bar .name:focus-visible {
+  outline: 2px solid var(--ag-accent);
+  outline-offset: 1px;
 }
 .bar button:disabled,
 .bar select:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
+}
+.bar .name {
+  width: 220px;
+  font-weight: 600;
+}
+.bar .name:hover {
+  border-color: var(--ag-border);
+}
+.bar .name:focus {
+  border-color: var(--ag-accent);
+  background: var(--ag-surface);
+}
+.bar select {
+  appearance: none;
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7080' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+.bar .primary-soft {
+  background: var(--ag-accent-soft);
+  color: var(--ag-accent);
+}
+.bar .primary-soft:hover:not(:disabled) {
+  background: var(--ag-accent-soft);
+  border-color: var(--ag-accent);
+}
+.bar .danger:hover:not(:disabled) {
+  background: var(--ag-error-bg);
+  color: var(--ag-error);
 }
 .bar .run {
-  background: #e28b46;
-  border-color: #e28b46;
-  color: #1b202c;
+  background: var(--ag-accent);
+  color: var(--ag-accent-fg);
   font-weight: 600;
+  padding: 0 18px;
+}
+.bar .run:hover:not(:disabled) {
+  background: var(--ag-accent-hover);
+}
+.bar .theme-toggle {
+  width: 36px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1.1em;
 }
 .banner {
   padding: 6px 12px;
-  background: #3a3320;
+  background: var(--ag-warn-bg);
   font-size: 0.9em;
 }
 .banner.error {
-  background: #4a2323;
+  background: var(--ag-error-bg);
 }
 .banner ul {
   margin: 4px 0 0;
@@ -292,7 +373,7 @@ const exec = (command: string) => viewModel.commandHandler.executeCommand(comman
 }
 .body {
   display: grid;
-  grid-template-columns: 240px 1fr 320px;
+  grid-template-columns: 1fr 320px;
   flex: 1;
   min-height: 0;
 }
@@ -300,26 +381,54 @@ const exec = (command: string) => viewModel.commandHandler.executeCommand(comman
   position: relative;
   min-width: 0;
 }
+.history {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  background: var(--ag-surface);
+  border: 1px solid var(--ag-border);
+  border-radius: 12px;
+  box-shadow: var(--ag-node-shadow);
+}
+.history button {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ag-text);
+  font-size: 1.2em;
+  cursor: pointer;
+}
+.history button:hover:not(:disabled) {
+  background: var(--ag-surface-hover);
+}
+.history button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
 </style>
 
 <style>
 /* Run status on Baklava nodes (set via data-run-status, see paint() in Editor.client.vue). */
 .baklava-node[data-run-status='running'] {
-  outline: 2px solid #e28b46;
+  outline: 2px solid var(--ag-accent);
 }
 .baklava-node[data-run-status='done'],
 .baklava-node[data-run-status='cached'] {
-  outline: 2px solid #5fd38d;
+  outline: 2px solid var(--ag-ok);
 }
 .baklava-node[data-run-status='error'] {
-  outline: 2px solid #ff6b6b;
+  outline: 2px solid var(--ag-error);
 }
 .baklava-node[data-run-status='skipped'],
 .baklava-node[data-run-status='cancelled'] {
-  outline: 2px dashed #8893a5;
+  outline: 2px dashed var(--ag-muted);
 }
 .baklava-node[data-run-status='queued'] {
-  outline: 2px dotted #8893a5;
+  outline: 2px dotted var(--ag-muted);
 }
 .baklava-node[data-run-status='running']::after {
   content: '';
@@ -328,7 +437,7 @@ const exec = (command: string) => viewModel.commandHandler.executeCommand(comman
   bottom: 0;
   height: 3px;
   width: var(--run-progress, 0%);
-  background: #e28b46;
+  background: var(--ag-accent);
 }
 /* Port colors by AnyGen port type (set by @baklavajs/interface-types). */
 .baklava-node-interface[data-interface-type='text'] .__port {
